@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trò Chơi KHTN 6: Bài 19 & Bài 20 - Thế Giới Tế Bào</title>
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --primary-light: #e8f5e9;
+            --secondary-color: #f57c00;
+            --error-color: #c62828;
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+        .container { background-color: var(--card-bg); width: 100%; max-width: 800px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 25px; position: relative; }
+        header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid var(--primary-light); padding-bottom: 15px; }
+        h1 { color: var(--primary-color); font-size: 1.4rem; margin-bottom: 6px; }
+        .sub-title { font-size: 0.95rem; color: #666; }
+        
+        #start-screen { text-align: center; padding: 20px 0; }
+        .input-group { margin: 20px 0; }
+        label { display: block; font-size: 1.1rem; margin-bottom: 10px; font-weight: 600; }
+        input[type="text"] { width: 100%; max-width: 400px; padding: 12px; font-size: 1.05rem; border: 2px solid #ccc; border-radius: 8px; outline: none; text-align: center; }
+        input[type="text"]:focus { border-color: var(--primary-color); }
+        
+        .btn { background-color: var(--primary-color); color: white; border: none; padding: 12px 24px; font-size: 1rem; font-weight: bold; border-radius: 8px; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
+        .btn:hover { background-color: #1b5e20; }
+        .btn-secondary { background-color: #78909c; }
+        .btn-secondary:hover { background-color: #455a64; }
+
+        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 10px; height: 10px; margin-bottom: 20px; overflow: hidden; display: none; }
+        .progress-bar { height: 100%; background-color: var(--primary-color); width: 0%; transition: width 0.3s ease; }
+
+        #quiz-screen { display: none; }
+        .question-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .level-badge { background-color: var(--primary-light); color: var(--primary-color); padding: 4px 12px; border-radius: 15px; font-size: 0.85rem; font-weight: bold; }
+        .question-number { font-size: 1rem; font-weight: bold; color: var(--secondary-color); }
+        .question-text { font-size: 1.15rem; font-weight: 600; line-height: 1.5; margin-bottom: 20px; }
+        
+        .options-list { list-style: none; }
+        .option-item { background-color: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; padding: 12px 16px; margin-bottom: 10px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; }
+        .option-item:hover { border-color: var(--primary-color); background-color: var(--primary-light); }
+        .option-item.selected { border-color: var(--primary-color); background-color: var(--primary-light); font-weight: bold; }
+        .option-item input[type="radio"] { margin-right: 12px; transform: scale(1.2); accent-color: var(--primary-color); }
+
+        /* Style dạng Đúng/Sai */
+        .tf-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .tf-table th, .tf-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .tf-table th { background-color: var(--primary-light); color: var(--primary-color); }
+        .tf-table td.center { text-align: center; width: 70px; }
+
+        /* Style dạng Nối ghép */
+        .match-container { display: flex; flex-direction: column; gap: 12px; }
+        .match-row { display: flex; align-items: center; gap: 10px; background-color: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #e0e0e0; }
+        .match-left { flex: 1; font-weight: 600; }
+        .match-arrow { font-weight: bold; color: var(--secondary-color); }
+        .match-select { flex: 1.5; padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.95rem; }
+
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 20px; }
+        
+        #result-screen { display: none; }
+        .score-box { text-align: center; background-color: var(--primary-light); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .final-score { font-size: 2.2rem; font-weight: bold; color: var(--secondary-color); margin: 8px 0; }
+        
+        .review-item { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 15px; background-color: #fff; }
+        .review-item.correct { border-left: 6px solid var(--primary-color); }
+        .review-item.incorrect { border-left: 6px solid var(--error-color); }
+        .explanation { margin-top: 8px; background-color: #f1f3f4; padding: 10px; border-radius: 6px; font-size: 0.9rem; color: #444; }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .question-text { font-size: 1rem; }
+            .btn { width: 48%; padding: 10px 5px; font-size: 0.9rem; }
+            .match-row { flex-direction: column; align-items: flex-start; }
+            .match-select { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>TRÒ CHƠI KHOA HỌC TỰ NHIÊN 6</h1>
+        <div class="sub-title">Chủ Đề Tế Bào (Bài 19 & Bài 20)</div>
+    </header>
+
+    <div class="progress-container" id="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div id="start-screen">
+        <div class="input-group">
+            <label for="student-name">Họ và tên học sinh:</label>
+            <input type="text" id="student-name" placeholder="Nhập họ và tên..." autocomplete="off">
+        </div>
+        <button class="btn" onclick="startQuiz()">Bắt Đầu Trò Chơi</button>
+    </div>
+
+    <div id="quiz-screen">
+        <div class="question-meta">
+            <span class="question-number" id="q-number">Câu 1/10</span>
+            <span class="level-badge" id="q-level">Nhận biết</span>
+        </div>
+        <div class="question-text" id="q-text">Nội dung câu hỏi</div>
+        
+        <div id="interactive-area"></div>
+
+        <div class="nav-buttons">
+            <button class="btn btn-secondary" id="btn-prev" onclick="prevQuestion()" disabled>Câu trước</button>
+            <button class="btn" id="btn-next" onclick="nextQuestion()">Câu tiếp</button>
+            <button class="btn" id="btn-submit" onclick="submitQuiz()" style="display: none; background-color: var(--secondary-color);">Nộp Bài</button>
+        </div>
+    </div>
+
+    <div id="result-screen">
+        <div class="score-box">
+            <h2>KẾT QUẢ BÀI LÀM</h2>
+            <p style="margin-top: 5px;">Học sinh: <strong id="result-name" style="color: var(--primary-color);"></strong></p>
+            <div class="final-score" id="result-score">0 / 10 Điểm</div>
+            <p id="result-feedback"></p>
+        </div>
+
+        <h3 style="margin-bottom: 15px; color: var(--primary-color);">ĐÁP ÁN VÀ LỜI GIẢI CHI TIẾT:</h3>
+        <div id="review-container"></div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="btn" onclick="restartQuiz()">Làm Lại Bài</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        {
+            type: "single",
+            level: "Nhận biết",
+            question: "Thành phần nào của tế bào đóng vai trò là trung tâm điều khiển mọi hoạt động sống và chứa vật chất di truyền?",
+            options: [
+                "Màng tế bào",
+                "Tế bào chất",
+                "Nhân (hoặc Vùng nhân)",
+                "Lục lạp"
+            ],
+            correct: 2,
+            explanation: "Nhân (hoặc vùng nhân ở tế bào nhân sơ) chứa vật chất di truyền và là trung tâm điều khiển mọi hoạt động sống của tế bào."
+        },
+        {
+            type: "match",
+            level: "Nhận biết",
+            question: "Hãy nối các thành phần cấu tạo tế bào ở cột trái với chức năng tương ứng ở cột phải:",
+            left: [
+                "1. Màng tế bào",
+                "2. Tế bào chất",
+                "3. Lục lạp"
+            ],
+            rightOptions: [
+                "-- Chọn chức năng --",
+                "a) Bao bọc tế bào, tham gia trao đổi chất giữa tế bào và môi trường",
+                "b) Là nơi diễn ra hầu hết các hoạt động trao đổi chất của tế bào",
+                "c) Chứa chất diệp lục, thực hiện chức năng quang hợp ở thực vật"
+            ],
+            correct: ["1", "2", "3"], // 1->a (index 1), 2->b (index 2), 3->c (index 3)
+            explanation: "Màng tế bào giúp bao bọc và trao đổi chất; Tế bào chất là nơi diễn ra các hoạt động trao đổi chất; Lục lạp thực hiện quang hợp."
+        },
+        {
+            type: "tf",
+            level: "Nhận biết",
+            question: "Đánh giá tính Đúng/Sai của các phát biểu sau về sự lớn lên và sinh sản của tế bào:",
+            statements: [
+                "a) Tế bào con mới hình thành đã có kích thước tối đa và phân chia ngay lập tức.",
+                "b) Mỗi tế bào khi lớn lên đến một kích thước nhất định sẽ phân chia thành 2 tế bào con.",
+                "c) Sự lớn lên của sinh vật đa bào chủ yếu do sự tăng lên về kích thước và số lượng tế bào."
+            ],
+            correct: [false, true, true],
+            explanation: "a) Sai vì tế bào con mới hình thành có kích thước bé, phải trao đổi chất để lớn lên mới phân chia."
+        },
+        {
+            type: "single",
+            level: "Nhận biết",
+            question: "Điểm khác biệt cơ bản nhất giữa tế bào nhân sơ và tế bào nhân thực là gì?",
+            options: [
+                "Tế bào nhân sơ không có màng tế bào",
+                "Tế bào nhân sơ chưa có nhân hoàn chỉnh (chỉ có vùng nhân)",
+                "Tế bào nhân sơ có kích thước lớn hơn tế bào nhân thực",
+                "Tế bào nhân sơ có chứa lục lạp"
+            ],
+            correct: 1,
+            explanation: "Tế bào nhân sơ chưa có màng nhân bao bọc vật chất di truyền nên chưa có nhân hoàn chỉnh (chỉ có vùng nhân)."
+        },
+        {
+            type: "single",
+            level: "Nhận biết",
+            question: "Từ 1 tế bào ban đầu, sau 3 lần phân chia (sinh sản) liên tiếp sẽ tạo ra bao nhiêu tế bào con?",
+            options: [
+                "3 tế bào",
+                "6 tế bào",
+                "8 tế bào",
+                "16 tế bào"
+            ],
+            correct: 2,
+            explanation: "Số tế bào con tạo thành theo cấp số nhân: 1 -> 2 -> 4 -> 8 tế bào con."
+        },
+        {
+            type: "match",
+            level: "Thông hiểu",
+            question: "Hãy nối các loại tế bào ở cột trái với đặc điểm cấu trúc đặc trưng tương ứng ở cột phải:",
+            left: [
+                "1. Tế bào vi khuẩn",
+                "2. Tế bào thực vật",
+                "3. Tế bào động vật"
+            ],
+            rightOptions: [
+                "-- Chọn đặc điểm --",
+                "a) Thuộc tế bào nhân sơ, chưa có nhân hoàn chỉnh",
+                "b) Thuộc tế bào nhân thực, có thành tế bào, lục lạp và không bào lớn",
+                "c) Thuộc tế bào nhân thực, không có thành tế bào và không có lục lạp"
+            ],
+            correct: ["1", "2", "3"],
+            explanation: "Vi khuẩn = Nhân sơ; Thực vật = Có thành tế bào & lục lạp; Động vật = Không có thành tế bào & lục lạp."
+        },
+        {
+            type: "tf",
+            level: "Thông hiểu",
+            question: "Đánh giá tính Đúng/Sai cho các nhận định sau về đặc điểm và vai trò của tế bào:",
+            statements: [
+                "a) Lục lạp là bào quan giúp thực vật tự tổng hợp chất hữu cơ nhờ ánh sáng mặt trời.",
+                "b) Nhờ có thành tế bào bao bọc bên ngoài nên tế bào động vật có hình dạng rất cố định.",
+                "c) Khi cơ thể sinh vật ngừng lớn, các tế bào trong cơ thể cũng ngừng hoàn toàn quá trình sinh sản."
+            ],
+            correct: [true, false, false],
+            explanation: "b) Sai vì tế bào động vật không có thành tế bào; c) Sai vì tế bào vẫn tiếp tục sinh sản để thay thế các tế bào già, chết."
+        },
+        {
+            type: "single",
+            level: "Thông hiểu",
+            question: "Vì sao tế bào thực vật thường có hình dạng cố định và chịu lực tốt hơn tế bào động vật?",
+            options: [
+                "Vì tế bào thực vật có chứa nhiều nước hơn",
+                "Vì tế bào thực vật có thành tế bào bao bọc bên ngoài màng tế bào",
+                "Vì tế bào thực vật có kích thước lớn hơn tế bào động vật",
+                "Vì tế bào thực vật có khả năng di chuyển linh hoạt"
+            ],
+            correct: 1,
+            explanation: "Thành tế bào bao bọc bên ngoài màng tế bào có chức năng quy định và giữ ổn định hình dạng tế bào thực vật."
+        },
+        {
+            type: "single",
+            level: "Vận dụng",
+            question: "Mỗi khi súc miệng hay chải răng, hàng nghìn tế bào niêm mạc miệng bị bong ra. Nhờ quá trình nào mà lớp niêm mạc miệng luôn được phục hồi nhanh chóng?",
+            options: [
+                "Nhờ sự tăng kích thước liên tục của các tế bào cũ",
+                "Nhờ sự phân chia (sinh sản) của các tế bào niêm mạc để tạo ra các tế bào mới thay thế",
+                "Nhờ tế bào tự hấp thụ các chất dinh dưỡng từ thức ăn để liền lại",
+                "Nhờ các bào quan trong tế bào tự nhân đôi mà không cần tế bào phân chia"
+            ],
+            correct: 1,
+            explanation: "Sự phân chia (sinh sản) tế bào giúp tạo ra tế bào mới thay thế cho các tế bào già, bị tổn thương hoặc chết."
+        },
+        {
+            type: "tf",
+            level: "Vận dụng",
+            question: "Vận dụng kiến thức thực hành làm mô hình tế bào và thực tế, hãy xác định tính Đúng/Sai:",
+            statements: [
+                "a) Hộp nhựa trong suốt được dùng mô phỏng thành tế bào thực vật vì nó cứng, giúp giữ nguyên hình dạng.",
+                "b) Tất cả các tế bào trên cơ thể người (như tế bào thần kinh, tế bào da) đều giữ nguyên khả năng phân chia liên tục suốt đời.",
+                "c) Ăn uống đủ chất dinh dưỡng và tập thể thao trực tiếp hỗ trợ tế bào trao đổi chất để lớn lên, giúp cơ thể phát triển chiều cao."
+            ],
+            correct: [true, false, true],
+            explanation: "b) Sai vì tế bào thần kinh ở người sau khi biệt hóa sẽ không còn khả năng phân chia (sinh sản)."
+        }
+    ];
+
+    let currentQuestion = 0;
+    let userAnswers = new Array(quizData.length).fill(null);
+    let studentName = "";
+
+    function startQuiz() {
+        const name = document.getElementById('student-name').value.trim();
+        if (!name) { alert("Vui lòng nhập họ và tên!"); return; }
+        studentName = name;
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'block';
+        document.getElementById('progress-container').style.display = 'block';
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const q = quizData[currentQuestion];
+        document.getElementById('q-number').innerText = `Câu ${currentQuestion + 1}/${quizData.length}`;
+        document.getElementById('q-level').innerText = q.level;
+        document.getElementById('q-text').innerText = q.question;
+
+        document.getElementById('progress-bar').style.width = `${((currentQuestion + 1) / quizData.length) * 100}%`;
+
+        const area = document.getElementById('interactive-area');
+        area.innerHTML = '';
+
+        if (q.type === 'single') {
+            const ul = document.createElement('ul');
+            ul.className = 'options-list';
+            q.options.forEach((opt, idx) => {
+                const li = document.createElement('li');
+                li.className = `option-item ${userAnswers[currentQuestion] === idx ? 'selected' : ''}`;
+                li.onclick = () => { userAnswers[currentQuestion] = idx; loadQuestion(); };
+                li.innerHTML = `<input type="radio" ${userAnswers[currentQuestion] === idx ? 'checked' : ''}> ${opt}`;
+                ul.appendChild(li);
+            });
+            area.appendChild(ul);
+        } else if (q.type === 'tf') {
+            if (!userAnswers[currentQuestion]) userAnswers[currentQuestion] = new Array(q.statements.length).fill(null);
+            const table = document.createElement('table');
+            table.className = 'tf-table';
+            table.innerHTML = `<tr><th>Mệnh đề</th><th class="center">Đúng</th><th class="center">Sai</th></tr>`;
+            q.statements.forEach((stmt, idx) => {
+                const tr = document.createElement('tr');
+                const val = userAnswers[currentQuestion][idx];
+                tr.innerHTML = `
+                    <td>${stmt}</td>
+                    <td class="center"><input type="radio" name="tf-${idx}" ${val === true ? 'checked' : ''} onclick="setTF(${idx}, true)"></td>
+                    <td class="center"><input type="radio" name="tf-${idx}" ${val === false ? 'checked' : ''} onclick="setTF(${idx}, false)"></td>
+                `;
+                table.appendChild(tr);
+            });
+            area.appendChild(table);
+        } else if (q.type === 'match') {
+            if (!userAnswers[currentQuestion]) userAnswers[currentQuestion] = new Array(q.left.length).fill("0");
+            const matchContainer = document.createElement('div');
+            matchContainer.className = 'match-container';
+            q.left.forEach((item, idx) => {
+                const row = document.createElement('div');
+                row.className = 'match-row';
+                let selectOptions = q.rightOptions.map((opt, oIdx) => 
+                    `<option value="${oIdx}" ${userAnswers[currentQuestion][idx] == oIdx ? 'selected' : ''}>${opt}</option>`
+                ).join('');
+                row.innerHTML = `
+                    <div class="match-left">${item}</div>
+                    <div class="match-arrow">➜</div>
+                    <select class="match-select" onchange="setMatch(${idx}, this.value)">${selectOptions}</select>
+                `;
+                matchContainer.appendChild(row);
+            });
+            area.appendChild(matchContainer);
+        }
+
+        document.getElementById('btn-prev').disabled = currentQuestion === 0;
+        if (currentQuestion === quizData.length - 1) {
+            document.getElementById('btn-next').style.display = 'none';
+            document.getElementById('btn-submit').style.display = 'inline-block';
+        } else {
+            document.getElementById('btn-next').style.display = 'inline-block';
+            document.getElementById('btn-submit').style.display = 'none';
+        }
+    }
+
+    function setTF(idx, val) { userAnswers[currentQuestion][idx] = val; }
+    function setMatch(idx, val) { userAnswers[currentQuestion][idx] = val; }
+    function nextQuestion() { if (currentQuestion < quizData.length - 1) { currentQuestion++; loadQuestion(); } }
+    function prevQuestion() { if (currentQuestion > 0) { currentQuestion--; loadQuestion(); } }
+
+    function submitQuiz() {
+        let score = 0;
+        quizData.forEach((q, idx) => {
+            const ans = userAnswers[idx];
+            if (q.type === 'single' && ans === q.correct) score++;
+            else if (q.type === 'tf' && Array.isArray(ans) && ans.every((v, i) => v === q.correct[i])) score++;
+            else if (q.type === 'match' && Array.isArray(ans) && ans.every((v, i) => v == q.correct[i])) score++;
+        });
+
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('progress-container').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+
+        document.getElementById('result-name').innerText = studentName;
+        document.getElementById('result-score').innerText = `${score} / 10 Điểm`;
+
+        const reviewContainer = document.getElementById('review-container');
+        reviewContainer.innerHTML = '';
+        quizData.forEach((q, idx) => {
+            const item = document.createElement('div');
+            item.className = 'review-item';
+            item.innerHTML = `<strong>Câu ${idx + 1}: ${q.question}</strong><div class="explanation"><strong>Lời giải / Giải thích:</strong> ${q.explanation}</div>`;
+            reviewContainer.appendChild(item);
+        });
+    }
+
+    function restartQuiz() {
+        currentQuestion = 0;
+        userAnswers = new Array(quizData.length).fill(null);
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'block';
+    }
+</script>
+</body>
+</html>
